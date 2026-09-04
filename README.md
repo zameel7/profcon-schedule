@@ -17,9 +17,9 @@ Public schedule and admin editor for the 30th PROFCON 2026. The website reads pu
 3. Run `setupScheduleSheet` once and approve the requested spreadsheet permission.
 4. Reload the Google Sheet. Use **PROFCON Website → Set admin key** and enter a unique password of at least 12 characters.
 5. In Apps Script, select **Deploy → New deployment → Web app**. Set **Execute as** to yourself and **Who has access** to anyone, then deploy.
-6. Copy the `/exec` URL. Duplicate `.env.example` as `.env` and replace the placeholder with that URL.
+6. Copy the `/exec` URL and store it in Cloudflare Pages as the `SCHEDULE_API_URL` environment secret.
 
-The public endpoint only returns rows whose `status` is `Published`. Admin POST requests require the key stored in Apps Script properties. The key is requested in the browser and kept in session storage; it is not built into the site.
+The Cloudflare Pages Function at `/api/schedule` reads `SCHEDULE_API_URL` from the Pages environment and proxies requests to Apps Script. The Apps Script URL is not embedded in the browser bundle. The public endpoint only returns rows whose `status` is `Published`. Admin POST requests require the key stored in Apps Script properties. The key is requested in the browser and kept in session storage; it is not built into the site.
 
 ## Run locally
 
@@ -28,7 +28,7 @@ pnpm install
 pnpm dev
 ```
 
-Open the local URL for the public schedule, and `/admin` for the editor. Without `.env`, the site runs in preview mode using the bundled PDF data. Preview admin changes are stored only in that browser.
+Open the local URL for the public schedule, and `/admin` for the editor. The Vite development server uses the bundled PDF data. Preview admin changes are stored only in that browser.
 
 ## Build for hosting
 
@@ -36,7 +36,12 @@ Open the local URL for the public schedule, and `/admin` for the editor. Without
 pnpm build
 ```
 
-Deploy the generated `dist` directory to Cloudflare Pages, Netlify, Vercel, GitHub Pages, or any static host. Configure `VITE_SCHEDULE_API_URL` as a build environment variable on the hosting platform.
+Deploy the generated `dist` directory and the root `functions` directory to Cloudflare Pages. Configure `SCHEDULE_API_URL` as a Pages environment secret:
+
+```bash
+wrangler pages secret put SCHEDULE_API_URL --project-name profcon-schedule
+wrangler pages deploy dist --project-name profcon-schedule --branch main
+```
 
 ## Refresh the extracted data
 

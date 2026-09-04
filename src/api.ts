@@ -1,7 +1,9 @@
 import fallbackSchedule from "./data/schedule.json";
 import type { ApiResponse, ScheduleItem } from "./types";
 
-export const apiUrl = (import.meta.env.VITE_SCHEDULE_API_URL as string | undefined)?.trim() || "";
+// Production uses a same-origin Cloudflare Pages Function. The Apps Script URL
+// stays in Cloudflare's environment rather than being embedded in this bundle.
+export const apiUrl = "/api/schedule";
 const DEMO_STORAGE_KEY = "profcon-2026-demo-schedule";
 
 const sortSessions = (sessions: ScheduleItem[]) =>
