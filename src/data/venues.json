@@ -1,0 +1,80 @@
+[
+  {
+    "id": "prime",
+    "name": "PRIME",
+    "program_head": "Faseeh PO",
+    "incharge_name": "Hilal Saleem",
+    "incharge_phone": "",
+    "it_coordinator": "Zameel Hassan",
+    "it_phone": "",
+    "coordinator_name": "",
+    "coordinator_phone": "",
+    "sort_order": 1,
+    "active": true
+  },
+  {
+    "id": "florets",
+    "name": "FLORETS",
+    "program_head": "Abdulla Basil",
+    "incharge_name": "Shifa Haris",
+    "incharge_phone": "",
+    "it_coordinator": "Jazeel Madani",
+    "it_phone": "",
+    "coordinator_name": "",
+    "coordinator_phone": "",
+    "sort_order": 2,
+    "active": true
+  },
+  {
+    "id": "global",
+    "name": "GLOBAL",
+    "program_head": "Haroun",
+    "incharge_name": "Hisham",
+    "incharge_phone": "",
+    "it_coordinator": "Adhil Ahmed",
+    "it_phone": "",
+    "coordinator_name": "",
+    "coordinator_phone": "",
+    "sort_order": 3,
+    "active": true
+  },
+  {
+    "id": "bloom",
+    "name": "BLOOM",
+    "program_head": "Waseem",
+    "incharge_name": "Athil Moideen",
+    "incharge_phone": "",
+    "it_coordinator": "Abdul Ahad",
+    "it_phone": "",
+    "coordinator_name": "",
+    "coordinator_phone": "",
+    "sort_order": 4,
+    "active": true
+  },
+  {
+    "id": "quest",
+    "name": "QUEST",
+    "program_head": "Waseem",
+    "incharge_name": "Athil Moideen",
+    "incharge_phone": "",
+    "it_coordinator": "Abdul Ahad",
+    "it_phone": "",
+    "coordinator_name": "",
+    "coordinator_phone": "",
+    "sort_order": 5,
+    "active": true
+  },
+  {
+    "id": "idam",
+    "name": "IDAM",
+    "program_head": "",
+    "incharge_name": "",
+    "incharge_phone": "",
+    "it_coordinator": "",
+    "it_phone": "",
+    "coordinator_name": "Safeer Al Hikami",
+    "coordinator_phone": "",
+    "sort_order": 6,
+    "active": true
+  }
+]
