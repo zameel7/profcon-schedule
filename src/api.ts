@@ -1,12 +1,13 @@
 import fallbackSchedule from "./data/schedule.json";
 import fallbackVenues from "./data/venues.json";
-import type { ApiResponse, ScheduleItem, VenueInfo } from "./types";
+import type { AdminTask, ApiResponse, ScheduleItem, VenueInfo } from "./types";
 
 // Production uses a same-origin Cloudflare Pages Function. The Apps Script URL
 // stays in Cloudflare's environment rather than being embedded in this bundle.
 export const apiUrl = import.meta.env.DEV ? "" : "/api/schedule";
 const DEMO_STORAGE_KEY = "profcon-2026-demo-schedule";
 const VENUE_STORAGE_KEY = "profcon-2026-demo-venues";
+const TASK_STORAGE_KEY = "profcon-2026-demo-tasks";
 
 const sortSessions = (sessions: ScheduleItem[]) =>
   [...sessions].sort((a, b) =>
@@ -45,6 +46,21 @@ export function getDemoVenues(): VenueInfo[] {
 
 export function saveDemoVenues(venues: VenueInfo[]) {
   localStorage.setItem(VENUE_STORAGE_KEY, JSON.stringify([...venues].sort((a, b) => a.sort_order - b.sort_order)));
+}
+
+export function getDemoTasks(): AdminTask[] {
+  const saved = localStorage.getItem(TASK_STORAGE_KEY);
+  if (!saved) return [];
+  try {
+    return (JSON.parse(saved) as AdminTask[]).sort((a, b) => a.due_at.localeCompare(b.due_at));
+  } catch {
+    localStorage.removeItem(TASK_STORAGE_KEY);
+    return [];
+  }
+}
+
+export function saveDemoTasks(tasks: AdminTask[]) {
+  localStorage.setItem(TASK_STORAGE_KEY, JSON.stringify([...tasks].sort((a, b) => a.due_at.localeCompare(b.due_at))));
 }
 
 export async function fetchPublicSchedule(): Promise<{ sessions: ScheduleItem[]; venues: VenueInfo[]; source: "sheet" | "tracker" | "demo" }> {

@@ -39,12 +39,31 @@ export interface VenueInfo {
   active: boolean;
 }
 
+export type TaskStatus = "Open" | "In Progress" | "Done";
+export type TaskPriority = "Low" | "Medium" | "High";
+
+export interface AdminTask {
+  id: string;
+  title: string;
+  details: string;
+  assignee: string;
+  venue: string;
+  due_at: string;
+  remind_at: string;
+  priority: TaskPriority;
+  status: TaskStatus;
+  created_at: string;
+  completed_at: string;
+}
+
 export interface ApiResponse {
   ok: boolean;
   sessions?: ScheduleItem[];
   venues?: VenueInfo[];
+  tasks?: AdminTask[];
   session?: ScheduleItem;
   venue?: VenueInfo;
+  task?: AdminTask;
   deletedId?: string;
   error?: string;
 }

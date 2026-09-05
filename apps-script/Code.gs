@@ -1,5 +1,6 @@
 const SCHEDULE_SHEET = 'Schedule';
 const VENUES_SHEET = 'Venues';
+const TASKS_SHEET = 'Tasks';
 const TIMEZONE = 'Asia/Kolkata';
 const SCHEDULE_HEADERS = [
   'id', 'date', 'day', 'track', 'venue', 'start_time', 'end_time',
@@ -11,6 +12,10 @@ const VENUE_HEADERS = [
   'id', 'name', 'program_head', 'incharge_name', 'incharge_phone',
   'it_coordinator', 'it_phone', 'coordinator_name', 'coordinator_phone',
   'sort_order', 'active'
+];
+const TASK_HEADERS = [
+  'id', 'title', 'details', 'assignee', 'venue', 'due_at', 'remind_at',
+  'priority', 'status', 'created_at', 'completed_at'
 ];
 const DEFAULT_VENUES = [
   ['prime', 'PRIME', 'Faseeh PO', 'Hilal Saleem', '', 'Zameel Hassan', '', '', '', 1, true],
@@ -48,7 +53,11 @@ function setupWebsiteSheets() {
   setColumnFormat_(schedule, headers, 'start_time', rowCount, 'h:mm AM/PM');
   setColumnFormat_(schedule, headers, 'end_time', rowCount, 'h:mm AM/PM');
   setColumnFormat_(schedule, headers, 'last_updated', rowCount, 'yyyy-mm-dd h:mm');
-  SpreadsheetApp.getUi().alert('Schedule and venue-contact sheets are ready.');
+  const tasks = getSheet_(TASKS_SHEET);
+  const taskHeaders = getHeaders_(tasks);
+  const taskRowCount = Math.max(tasks.getMaxRows() - 1, 1);
+  ['due_at', 'remind_at', 'created_at', 'completed_at'].forEach((header) => setColumnFormat_(tasks, taskHeaders, header, taskRowCount, 'yyyy-mm-dd h:mm'));
+  SpreadsheetApp.getUi().alert('Schedule, venue-contact, and task sheets are ready.');
 }
 
 function doGet(e) {
@@ -67,10 +76,12 @@ function doPost(e) {
     const body = JSON.parse((e.postData && e.postData.contents) || '{}');
     requireAdmin_(body.adminKey);
     ensureWebsiteSheets_();
-    if (body.action === 'list') return json_({ ok: true, sessions: sortSessions_(readObjects_(SCHEDULE_SHEET)), venues: sortVenues_(readObjects_(VENUES_SHEET)) });
+    if (body.action === 'list') return json_({ ok: true, sessions: sortSessions_(readObjects_(SCHEDULE_SHEET)), venues: sortVenues_(readObjects_(VENUES_SHEET)), tasks: sortTasks_(readObjects_(TASKS_SHEET)) });
     if (body.action === 'upsert') return json_({ ok: true, session: upsertObject_(SCHEDULE_SHEET, SCHEDULE_HEADERS, validateSession_(body.session)) });
     if (body.action === 'upsertVenue') return json_({ ok: true, venue: upsertObject_(VENUES_SHEET, VENUE_HEADERS, validateVenue_(body.venue)) });
+    if (body.action === 'upsertTask') return json_({ ok: true, task: upsertObject_(TASKS_SHEET, TASK_HEADERS, validateTask_(body.task)) });
     if (body.action === 'delete') return json_({ ok: true, deletedId: deleteObject_(SCHEDULE_SHEET, body.id) });
+    if (body.action === 'deleteTask') return json_({ ok: true, deletedId: deleteObject_(TASKS_SHEET, body.id) });
     if (body.action === 'replaceAll') return json_({ ok: true, result: replaceAll_(body.sessions, body.venues) });
     throw new Error('Unsupported action.');
   } catch (error) { return json_({ ok: false, error: error.message }); }
@@ -85,6 +96,7 @@ function requireAdmin_(providedKey) {
 function ensureWebsiteSheets_() {
   ensureSheet_(SCHEDULE_SHEET, SCHEDULE_HEADERS);
   const venueSheet = ensureSheet_(VENUES_SHEET, VENUE_HEADERS);
+  ensureSheet_(TASKS_SHEET, TASK_HEADERS);
   if (venueSheet.getLastRow() === 1) venueSheet.getRange(2, 1, DEFAULT_VENUES.length, VENUE_HEADERS.length).setValues(DEFAULT_VENUES);
 }
 
@@ -148,6 +160,17 @@ function validateVenue_(venue) {
   return venue;
 }
 
+function validateTask_(task) {
+  if (!task || !task.id || !String(task.title || '').trim()) throw new Error('Task id and title are required.');
+  if (!task.due_at || isNaN(new Date(task.due_at).getTime())) throw new Error('A valid task due date is required.');
+  if (task.remind_at && isNaN(new Date(task.remind_at).getTime())) throw new Error('Reminder time is invalid.');
+  if (!['Low', 'Medium', 'High'].includes(task.priority)) throw new Error('Task priority is invalid.');
+  if (!['Open', 'In Progress', 'Done'].includes(task.status)) throw new Error('Task status is invalid.');
+  if (!task.created_at) task.created_at = new Date();
+  task.completed_at = task.status === 'Done' ? (task.completed_at || new Date()) : '';
+  return task;
+}
+
 function upsertObject_(sheetName, requiredHeaders, object) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
@@ -160,6 +183,7 @@ function upsertObject_(sheetName, requiredHeaders, object) {
     const row = headers.map((header) => toSheetValue_(header, object[header]));
     sheet.getRange(rowNumber, 1, 1, headers.length).setValues([row]);
     if (sheetName === SCHEDULE_SHEET) formatScheduleRow_(sheet, headers, rowNumber);
+    if (sheetName === TASKS_SHEET) formatTaskRow_(sheet, headers, rowNumber);
     SpreadsheetApp.flush();
     return readObjects_(sheetName).find((item) => item.id === String(object.id));
   } finally { lock.releaseLock(); }
@@ -169,6 +193,7 @@ function toSheetValue_(header, value) {
   if (header === 'date') { const parts = String(value).split('-').map(Number); return new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0); }
   if (header === 'start_time' || header === 'end_time') { const parts = String(value).split(':').map(Number); return (parts[0] * 60 + parts[1]) / 1440; }
   if (header === 'last_updated') return value instanceof Date ? value : new Date(value || Date.now());
+  if (['due_at', 'remind_at', 'created_at', 'completed_at'].includes(header)) return value ? (value instanceof Date ? value : new Date(value)) : '';
   if (header === 'source_page' || header === 'sort_order') return value === '' || value === undefined ? '' : Number(value);
   if (header === 'active') return value !== false && String(value).toLowerCase() !== 'false';
   const text = value === null || value === undefined ? '' : String(value);
@@ -223,6 +248,13 @@ function formatScheduleRow_(sheet, headers, rowNumber) {
   });
 }
 
+function formatTaskRow_(sheet, headers, rowNumber) {
+  ['due_at', 'remind_at', 'created_at', 'completed_at'].forEach((header) => {
+    const column = headers.indexOf(header) + 1;
+    if (column > 0) sheet.getRange(rowNumber, column).setNumberFormat('yyyy-mm-dd h:mm');
+  });
+}
+
 function setColumnFormat_(sheet, headers, header, rowCount, format) {
   const column = headers.indexOf(header) + 1;
   if (column > 0) sheet.getRange(2, column, rowCount, 1).setNumberFormat(format);
@@ -230,4 +262,5 @@ function setColumnFormat_(sheet, headers, header, rowCount, format) {
 
 function sortSessions_(sessions) { return sessions.sort((a, b) => `${a.date}T${a.start_time}-${a.venue}-${a.title}`.localeCompare(`${b.date}T${b.start_time}-${b.venue}-${b.title}`)); }
 function sortVenues_(venues) { return venues.sort((a, b) => Number(a.sort_order) - Number(b.sort_order)); }
+function sortTasks_(tasks) { return tasks.sort((a, b) => `${a.status === 'Done' ? 1 : 0}-${a.due_at}-${a.title}`.localeCompare(`${b.status === 'Done' ? 1 : 0}-${b.due_at}-${b.title}`)); }
 function json_(payload) { return ContentService.createTextOutput(JSON.stringify(payload)).setMimeType(ContentService.MimeType.JSON); }
