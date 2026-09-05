@@ -8,7 +8,7 @@ Public schedule and operations editor for the 30th PROFCON 2026. The website rea
 - `src/data/venues.json` — venue heads, in-charges, IT coordinators, and IDAM coordinator details.
 - `apps-script/Code.gs` — Google Apps Script API for public reads and authenticated admin changes.
 - `/` — venue-first public schedule, contact cards, call buttons, confirmation status, and clickable session details.
-- `/admin` — session, venue-contact, and task editor, including due times, reminders, priorities, completion state, and Drive links.
+- `/admin` — simple click-to-edit session and venue editor, plus lightweight tasks and Drive links.
 
 ## Connect the Google Sheet
 
@@ -21,7 +21,7 @@ Public schedule and operations editor for the 30th PROFCON 2026. The website rea
 
 ## Tasks and reminders
 
-The **Tasks & reminders** admin section stores task title, notes, assignee, venue, priority, status, due time, reminder time, and completion time in the `Tasks` sheet. Overdue and due-soon tasks are highlighted. **Enable reminders** asks for browser notification permission and displays reminders while the admin page is open; overdue tasks remain visible even when notifications are disabled.
+The **Tasks** section works like a lightweight task list: add a title, optional description, and optional time from the floating + button. When a time is set it is also used for the browser notification. **Enable notifications** asks for browser permission and displays reminders while the admin page is open.
 
 The Cloudflare Pages Function at `/api/schedule` reads `SCHEDULE_API_URL` from the Pages environment and proxies requests to Apps Script. The Apps Script URL is not embedded in the browser bundle. The public endpoint only returns rows whose `status` is `Published`. Admin POST requests require the key stored in Apps Script properties. The key is requested in the browser and kept in session storage; it is not built into the site.
 

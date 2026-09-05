@@ -162,8 +162,10 @@ function validateVenue_(venue) {
 
 function validateTask_(task) {
   if (!task || !task.id || !String(task.title || '').trim()) throw new Error('Task id and title are required.');
-  if (!task.due_at || isNaN(new Date(task.due_at).getTime())) throw new Error('A valid task due date is required.');
+  if (task.due_at && isNaN(new Date(task.due_at).getTime())) throw new Error('Task time is invalid.');
   if (task.remind_at && isNaN(new Date(task.remind_at).getTime())) throw new Error('Reminder time is invalid.');
+  task.priority = task.priority || 'Medium';
+  task.status = task.status || 'Open';
   if (!['Low', 'Medium', 'High'].includes(task.priority)) throw new Error('Task priority is invalid.');
   if (!['Open', 'In Progress', 'Done'].includes(task.status)) throw new Error('Task status is invalid.');
   if (!task.created_at) task.created_at = new Date();
@@ -262,5 +264,5 @@ function setColumnFormat_(sheet, headers, header, rowCount, format) {
 
 function sortSessions_(sessions) { return sessions.sort((a, b) => `${a.date}T${a.start_time}-${a.venue}-${a.title}`.localeCompare(`${b.date}T${b.start_time}-${b.venue}-${b.title}`)); }
 function sortVenues_(venues) { return venues.sort((a, b) => Number(a.sort_order) - Number(b.sort_order)); }
-function sortTasks_(tasks) { return tasks.sort((a, b) => `${a.status === 'Done' ? 1 : 0}-${a.due_at}-${a.title}`.localeCompare(`${b.status === 'Done' ? 1 : 0}-${b.due_at}-${b.title}`)); }
+function sortTasks_(tasks) { return tasks.sort((a, b) => `${a.status === 'Done' ? 1 : 0}-${a.due_at || '9999'}-${a.title}`.localeCompare(`${b.status === 'Done' ? 1 : 0}-${b.due_at || '9999'}-${b.title}`)); }
 function json_(payload) { return ContentService.createTextOutput(JSON.stringify(payload)).setMimeType(ContentService.MimeType.JSON); }

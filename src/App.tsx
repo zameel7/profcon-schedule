@@ -18,29 +18,12 @@ const displayTime = (time: string) => {
   return new Intl.DateTimeFormat("en-IN", { hour: "numeric", minute: "2-digit", hour12: true }).format(new Date(2026, 0, 1, hours, minutes));
 };
 
-const sessionDate = (session: ScheduleItem, end = false) => new Date(`${session.date}T${end ? session.end_time : session.start_time}:00+05:30`);
 const isConfirmed = (value?: string) => value?.trim().toLowerCase() === "confirmed";
 const validLink = (value?: string) => {
   if (!value) return "";
   try { const url = new URL(value); return ["http:", "https:"].includes(url.protocol) ? url.toString() : ""; } catch { return ""; }
 };
 const cleanPhone = (phone: string) => phone.replace(/[^+\d]/g, "");
-
-function LiveSummary({ sessions }: { sessions: ScheduleItem[] }) {
-  const now = new Date();
-  const ordered = [...sessions].sort((a, b) => sessionDate(a).getTime() - sessionDate(b).getTime());
-  const current = ordered.find((session) => sessionDate(session) <= now && sessionDate(session, true) > now);
-  const next = ordered.find((session) => sessionDate(session) > now);
-  const eventStart = new Date("2026-09-11T18:15:00+05:30");
-  const eventEnd = new Date("2026-09-13T13:45:00+05:30");
-  if (current) return <section className="live-card active-live"><div className="live-pulse" /><div><span className="eyebrow">Happening now · {current.venue}</span><h2>{current.title}</h2><p>Until {displayTime(current.end_time)} · {current.faculty || current.details}</p></div></section>;
-  if (now < eventStart && next) {
-    const days = Math.max(1, Math.ceil((eventStart.getTime() - now.getTime()) / 86_400_000));
-    return <section className="live-card"><div className="date-tile"><strong>{days}</strong><span>days to go</span></div><div><span className="eyebrow">The first session</span><h2>{next.title}</h2><p>Friday at {displayTime(next.start_time)} · {next.venue}</p></div></section>;
-  }
-  if (now > eventEnd) return <section className="live-card"><div><span className="eyebrow">Event complete</span><h2>Thank you for being part of PROFCON 2026.</h2></div></section>;
-  return next ? <section className="live-card"><div className="date-tile"><strong>Next</strong><span>{next.venue}</span></div><div><span className="eyebrow">Coming up</span><h2>{next.title}</h2><p>{displayTime(next.start_time)} · {next.faculty || next.details}</p></div></section> : null;
-}
 
 function Contact({ role, name, phone }: { role: string; name: string; phone: string }) {
   if (!name) return null;
@@ -88,9 +71,8 @@ function PublicSchedule() {
   const grouped = DAYS.map((day) => ({ day, sessions: visibleSessions.filter((session) => session.date === day.date) })).filter((group) => group.sessions.length);
 
   return <div className="site-shell">
-    <header className="site-header"><nav className="nav wrap"><a className="brand" href="/" aria-label="PROFCON schedule home"><span>30</span><div><strong>PROFCON</strong><small>2026 · PALAKKAD</small></div></a><a className="admin-link" href="/admin">Admin</a></nav><div className="hero wrap"><div><span className="eyebrow light">September 11–13 · Ahalia Campus</span><h1>Your programme,<br /><em>venue by venue.</em></h1><p>Choose where you are, see who to call, and open any session for faculty status, details, and shared files.</p></div><div className="hero-mark" aria-hidden="true"><span>30</span><small>EDITIONS<br />ONE VISION</small></div></div></header>
-    <main className="wrap main-content">
-      {!loading && <LiveSummary sessions={sessions} />}
+    <header className="site-header compact-site-header"><nav className="nav wrap"><a className="brand" href="/" aria-label="PROFCON schedule home"><span>30</span><div><strong>PROFCON</strong><small>2026 · PALAKKAD</small></div></a><div className="compact-header-meta"><span>Sep 11–13 · Ahalia Campus</span><a className="admin-link" href="/admin">Admin</a></div></nav></header>
+    <main className="wrap main-content no-hero">
       {source === "tracker" && <div className="demo-note"><span>Latest tracker loaded.</span> Venue contacts and admin fields will sync after the updated Apps Script is deployed.</div>}
       {source === "demo" && <div className="demo-note"><span>Offline view.</span> Showing the bundled master tracker while the live service is unavailable.</div>}
       <section className="venue-navigation" aria-labelledby="choose-venue"><div className="section-title"><span className="eyebrow">Start here</span><h2 id="choose-venue">Choose a venue</h2></div><div className="venue-grid">{venues.map((venue) => <button key={venue.id} className={`venue-choice ${selectedVenue === venue.name ? "selected" : ""}`} onClick={() => { setSelectedVenue(venue.name); setSelectedDate("all"); setQuery(""); }}><span className={`venue-dot ${VENUE_COLORS[venue.name] || "blue"}`} /><strong>{venue.name}</strong><small>{sessions.filter((session) => session.venue === venue.name).length} sessions</small></button>)}</div></section>

@@ -52,7 +52,7 @@ export function getDemoTasks(): AdminTask[] {
   const saved = localStorage.getItem(TASK_STORAGE_KEY);
   if (!saved) return [];
   try {
-    return (JSON.parse(saved) as AdminTask[]).sort((a, b) => a.due_at.localeCompare(b.due_at));
+    return (JSON.parse(saved) as AdminTask[]).sort((a, b) => (a.due_at || "9999").localeCompare(b.due_at || "9999"));
   } catch {
     localStorage.removeItem(TASK_STORAGE_KEY);
     return [];
@@ -60,7 +60,7 @@ export function getDemoTasks(): AdminTask[] {
 }
 
 export function saveDemoTasks(tasks: AdminTask[]) {
-  localStorage.setItem(TASK_STORAGE_KEY, JSON.stringify([...tasks].sort((a, b) => a.due_at.localeCompare(b.due_at))));
+  localStorage.setItem(TASK_STORAGE_KEY, JSON.stringify([...tasks].sort((a, b) => (a.due_at || "9999").localeCompare(b.due_at || "9999"))));
 }
 
 export async function fetchPublicSchedule(): Promise<{ sessions: ScheduleItem[]; venues: VenueInfo[]; source: "sheet" | "tracker" | "demo" }> {
